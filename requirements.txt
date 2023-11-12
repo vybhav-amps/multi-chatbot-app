@@ -4,3 +4,4 @@ streamlit==1.22.0
 openai
 pypdf
 sentence-transformers
+faiss-gpu
