@@ -3,3 +3,4 @@ python-dotenv==1.0.0
 streamlit==1.22.0
 openai
 pypdf
+sentence-transformers
