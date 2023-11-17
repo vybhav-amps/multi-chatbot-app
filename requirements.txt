@@ -4,3 +4,4 @@ openai
 pypdf
 sentence-transformers
 faiss-gpu
+numpy
