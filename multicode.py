@@ -5,6 +5,7 @@ import tempfile
 import pickle
 import sqlite3
 from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.document_loaders import PyPDFLoader
@@ -124,6 +125,23 @@ prompt = PromptTemplate(
     template=prompt_template, input_variables=["context", "question"]
 )
 
+def aibot(prompt, chatbot_id, chat_bot, conn, cursor):
+    chat_prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are a very friendly and creative AI"),
+        ("user", prompt)
+    ])
+    
+    response = chat_bot(chat_prompt.format_messages(prompt=prompt), temperature=0.65, max_tokens=300)
+    response=response.content
+    response_text = response if isinstance(response, str) else str(response)
+
+    cursor.execute("INSERT INTO chat_bot (chatbot_id, user_input, chatbot_response) VALUES (?, ?, ?)",
+                   (chatbot_id, prompt, response_text))
+    conn.commit()
+    
+    return response_text
+
+
 
 def main():
     st.title("Multi-Chatbot Manager 🤖")
@@ -157,7 +175,7 @@ def chatbot_controls(chatbot_id, conn, cursor):
 
     st.sidebar.markdown(f"## Chatbot: {chatbot_id}")
 
-    load_dotenv('key.env')
+    os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 
     if chatbot_id not in st.session_state.chatbots:
         st.session_state.chatbots[chatbot_id] = {"model": None, "temperature": 0.7, "max_tokens": 500, "vectordb": None}
@@ -190,7 +208,8 @@ def chatbot_controls(chatbot_id, conn, cursor):
     user_input = st.sidebar.text_input(f"Ask a question to {chatbot_id}:", key=f"user_input_{chatbot_id}")
 
     if st.sidebar.button(f"Submit to {chatbot_id}", key=f"submit_{chatbot_id}"):
-        if chatbot['vectordb'] is not None:
+
+        if chatbot.get('vectordb'):
             vectordb = chatbot['vectordb']
 
             doc_chain = load_qa_with_sources_chain(llm, chain_type="stuff")
@@ -219,6 +238,11 @@ def chatbot_controls(chatbot_id, conn, cursor):
             cursor.execute("INSERT INTO chat_bot (chatbot_id, user_input, chatbot_response) VALUES (?, ?, ?)", (chatbot_id, user_input, response))
             conn.commit()
 
+            st.markdown(f"<div class='userbox'>Chatbot {chatbot_id}: {response}</div>", unsafe_allow_html=True)
+
+        else:
+            chat_bot = ChatOpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
+            response = aibot(user_input, chatbot_id, chat_bot, conn, cursor)
             st.markdown(f"<div class='userbox'>Chatbot {chatbot_id}: {response}</div>", unsafe_allow_html=True)
 
     st.markdown(f"### Chat History for {chatbot_id}")
