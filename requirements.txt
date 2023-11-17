@@ -3,5 +3,5 @@ streamlit
 openai
 pypdf
 sentence-transformers
-faiss-gpu
+faiss-cpu
 numpy
