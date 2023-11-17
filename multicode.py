@@ -10,7 +10,7 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.document_loaders import PyPDFLoader
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
-from langchain import LLMChain
+from langchain.chains import LLMChain
 from langchain.chains import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
